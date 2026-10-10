@@ -1,0 +1,208 @@
+/* ==========================================
+   ARACHNOS PERSONAL — POPUP STYLES
+   Minimalist dark aesthetic with emerald accents
+   ========================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+}
+
+body {
+  width: 190px;
+  background-color: #080b10;
+  color: #e2e8f0;
+  padding: 14px 12px 10px 12px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.popup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Header */
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.spider-logo {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.dot.online {
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.dot.offline {
+  background-color: #64748b;
+}
+
+/* Big Start/Stop Button */
+.control-section {
+  width: 100%;
+}
+
+.toggle-button {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toggle-button.active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
+}
+
+.status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #64748b;
+  transition: all 0.2s;
+}
+
+.toggle-button.active .status-indicator {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+/* Spider Count adjustment */
+.fleet-section {
+  width: 100%;
+}
+
+.spider-selector {
+  display: flex;
+  justify-content: space-between;
+  background: #0a0f18;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 3px;
+  border-radius: 6px;
+}
+
+.fleet-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fleet-btn:hover {
+  color: #cbd5e1;
+}
+
+.fleet-btn.active {
+  background: #1e293b;
+  color: #34d399;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Autonomous Mode Toggle */
+.autonomous-section {
+  width: 100%;
+}
+
+.autonomous-toggle {
+  width: 100%;
+  padding: 7px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0a0f18;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.autonomous-toggle:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #94a3b8;
+}
+
+.autonomous-toggle.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.auto-icon {
+  font-size: 11px;
+}
+
+/* Footer icons */
+.footer {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.icon-link {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-link:hover {
+  color: #10b981;
+}

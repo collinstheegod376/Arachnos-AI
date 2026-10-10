@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arachnos</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Top Header: Spider Icon & Connection Dot -->
+    <div class="header">
+      <div class="brand">
+        <svg class="spider-logo" viewBox="0 0 128 128">
+          <circle cx="64" cy="64" r="50" fill="none" stroke="#10b981" stroke-width="2" stroke-opacity="0.3"/>
+          <path d="M 54 54 Q 30 26 18 36 M 52 62 Q 22 50 14 62 M 52 70 Q 24 82 16 94 M 56 78 Q 34 104 26 116" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 74 54 Q 98 26 110 36 M 76 62 Q 106 50 114 62 M 76 70 Q 104 82 112 94 M 72 78 Q 94 104 102 116" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <ellipse cx="64" cy="78" rx="14" ry="18" fill="#111827" stroke="#10b981" stroke-width="2"/>
+          <ellipse cx="64" cy="54" rx="11" ry="12" fill="#111827" stroke="#34d399" stroke-width="2"/>
+          <circle cx="60" cy="50" r="2" fill="#34d399"/>
+          <circle cx="68" cy="50" r="2" fill="#34d399"/>
+        </svg>
+      </div>
+      <div id="connection-dot" class="dot offline" title="Connecting to local brain..."></div>
+    </div>
+
+    <!-- Main Toggle Control (Start / Stop) -->
+    <div class="control-section">
+      <button id="toggle-btn" class="toggle-button active">
+        <span class="status-indicator"></span>
+        <span id="toggle-label" class="toggle-text">ACTIVE</span>
+      </button>
+    </div>
+
+    <!-- Minimal Spider Count Adjustment: [1] [2] [3] [4] -->
+    <div class="fleet-section">
+      <div class="spider-selector">
+        <button class="fleet-btn" data-count="1">1</button>
+        <button class="fleet-btn" data-count="2">2</button>
+        <button class="fleet-btn active" data-count="3">3</button>
+        <button class="fleet-btn" data-count="4">4</button>
+      </div>
+    </div>
+
+    <!-- Autonomous Mode Control -->
+    <div class="autonomous-section">
+      <button id="autonomous-btn" class="autonomous-toggle" title="Allow spiders to auto-scroll and explore links autonomously">
+        <span class="auto-icon">⚡</span>
+        <span id="autonomous-label" class="auto-text">Autonomous: OFF</span>
+      </button>
+    </div>
+
+    <!-- Bottom Actions: Side Panel & Settings -->
+    <div class="footer">
+      <button id="open-sidepanel" class="icon-link" title="Open Side Panel Chat">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+      <button id="open-options" class="icon-link" title="Settings">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

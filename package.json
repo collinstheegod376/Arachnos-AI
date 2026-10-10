@@ -1,0 +1,26 @@
+{
+  "name": "arachnos-personal",
+  "version": "2.1.0",
+  "description": "Arachnos Personal — Local Learning Chrome Extension with Animated Spiders and Knowledge Brain",
+  "scripts": {
+    "dev": "npm --prefix server run dev",
+    "build": "npm --prefix server run build",
+    "test:brain": "npx tsx server/src/brain/test-brain.ts",
+    "test:learning": "npx tsx server/src/brain/test-learning-loop.ts",
+    "test:crawler": "npx tsx server/src/crawler/test-runner.ts",
+    "start": "npm --prefix server run start"
+  },
+  "keywords": [
+    "chrome-extension",
+    "personal-ai",
+    "spiders",
+    "knowledge-graph",
+    "rag",
+    "local-llm",
+    "ollama",
+    "real-time"
+  ],
+  "author": "Arachnos Team",
+  "license": "MIT",
+  "type": "module"
+}

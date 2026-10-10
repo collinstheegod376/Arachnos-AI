@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arachnos Personal — Settings & Memory</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-container">
+    <header class="options-header">
+      <div class="logo-wrap">
+        <svg class="spider-icon" viewBox="0 0 128 128">
+          <circle cx="64" cy="64" r="50" fill="none" stroke="#10b981" stroke-width="2" stroke-opacity="0.3"/>
+          <path d="M 54 54 Q 30 26 18 36 M 52 62 Q 22 50 14 62 M 52 70 Q 24 82 16 94 M 56 78 Q 34 104 26 116" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 74 54 Q 98 26 110 36 M 76 62 Q 106 50 114 62 M 76 70 Q 104 82 112 94 M 72 78 Q 94 104 102 116" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <ellipse cx="64" cy="78" rx="14" ry="18" fill="#111827" stroke="#10b981" stroke-width="2"/>
+          <ellipse cx="64" cy="54" rx="11" ry="12" fill="#111827" stroke="#34d399" stroke-width="2"/>
+          <circle cx="60" cy="50" r="2" fill="#34d399"/>
+          <circle cx="68" cy="50" r="2" fill="#34d399"/>
+        </svg>
+        <div>
+          <h1>Arachnos Personal</h1>
+          <p class="subtitle">Local Configuration & Memory Tiers</p>
+        </div>
+      </div>
+      <div id="status-pill" class="status-badge offline">Server Disconnected</div>
+    </header>
+
+    <div class="content-grid">
+      <!-- Left Column: Settings -->
+      <section class="card">
+        <h2>Local Brain Connection</h2>
+        <div class="form-group">
+          <label for="server-url">Brain Server Endpoint</label>
+          <input type="text" id="server-url" value="http://localhost:3001" placeholder="http://localhost:3001" />
+          <span class="field-help">Default Node.js Brain server running on your machine.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="spider-count-select">Active Spiders On Page</label>
+          <select id="spider-count-select">
+            <option value="1">1 Spider (Ultra Lightweight)</option>
+            <option value="2">2 Spiders</option>
+            <option value="3" selected>3 Spiders (Recommended)</option>
+            <option value="4">4 Spiders (Maximum Coverage)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+          <label style="color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="autonomous-mode-checkbox" />
+            <span>Enable Autonomous Mode</span>
+          </label>
+          <span class="field-help">Grants spiders autonomous control to scroll the page and explore linked pages.</span>
+        </div>
+
+        <div class="form-group" style="padding-left: 20px;">
+          <label style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="auto-scroll-checkbox" checked />
+            <span>Smooth Auto-Scroll Down</span>
+          </label>
+          <span class="field-help">Spiders scroll down to harvest the rest of the page/feed when current view is done.</span>
+        </div>
+
+        <div class="form-group" style="padding-left: 20px;">
+          <label style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="auto-follow-links-checkbox" checked />
+            <span>Auto-Follow & Open Related Links</span>
+          </label>
+          <span class="field-help">Spiders navigate or open internal article links to continue learning across pages.</span>
+        </div>
+
+        <div class="actions">
+          <button id="save-settings-btn" class="primary-btn">Save Settings</button>
+          <span id="save-feedback" class="feedback-text"></span>
+        </div>
+      </section>
+
+      <!-- Right Column: Memory Stats & Tiers -->
+      <section class="card">
+        <h2>Memory Tiers & Storage</h2>
+        <div class="stats-row">
+          <div class="stat-box">
+            <span id="stat-total" class="stat-number">0</span>
+            <span class="stat-label">Total Memories</span>
+          </div>
+          <div class="stat-box">
+            <span id="stat-reinforced" class="stat-number">0</span>
+            <span class="stat-label">User Reinforced (Tier 3)</span>
+          </div>
+          <div class="stat-box">
+            <span id="stat-harvests" class="stat-number">0</span>
+            <span class="stat-label">Raw Harvests (Tier 1)</span>
+          </div>
+        </div>
+
+        <div class="memory-filter-bar">
+          <input type="text" id="memory-search" placeholder="Filter memories..." />
+          <button id="refresh-memories-btn" class="small-btn">Refresh</button>
+        </div>
+
+        <div id="memory-list" class="memory-list">
+          <div class="empty-state">Loading memories from local Brain...</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

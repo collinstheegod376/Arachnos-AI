@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="spiderGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#059669" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#047857" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="metalBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="50%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="64" cy="64" r="54" fill="url(#spiderGlow)"/>
+
+  <!-- Legs Left -->
+  <path d="M 54 54 Q 30 26 18 36 Q 12 44 22 52" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 52 62 Q 22 50 14 62 Q 10 70 24 74" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 52 70 Q 24 82 16 94 Q 14 104 28 102" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 56 78 Q 34 104 26 116 Q 24 122 36 120" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Legs Right -->
+  <path d="M 74 54 Q 98 26 110 36 Q 116 44 106 52" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 76 62 Q 106 50 114 62 Q 118 70 104 74" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 76 70 Q 104 82 112 94 Q 114 104 100 102" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 72 78 Q 94 104 102 116 Q 104 122 92 120" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Pedipalps -->
+  <path d="M 58 46 Q 52 32 46 38" stroke="#34d399" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 70 46 Q 76 32 82 38" stroke="#34d399" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Abdomen (Rear Body) -->
+  <ellipse cx="64" cy="80" rx="15" ry="20" fill="url(#metalBody)" stroke="#10b981" stroke-width="1.8"/>
+  <path d="M 64 64 L 64 96" stroke="#34d399" stroke-width="1.2" opacity="0.6"/>
+  <circle cx="64" cy="88" r="3" fill="#10b981"/>
+
+  <!-- Cephalothorax (Front Body) -->
+  <ellipse cx="64" cy="54" rx="12" ry="14" fill="url(#metalBody)" stroke="#34d399" stroke-width="2"/>
+
+  <!-- Glowing Eyes -->
+  <circle cx="60" cy="48" r="2.2" fill="#34d399"/>
+  <circle cx="68" cy="48" r="2.2" fill="#34d399"/>
+  <circle cx="56" cy="52" r="1.5" fill="#10b981"/>
+  <circle cx="72" cy="52" r="1.5" fill="#10b981"/>
+</svg>

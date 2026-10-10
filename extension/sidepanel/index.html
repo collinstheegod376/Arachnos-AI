@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arachnos Side Panel</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="sidepanel-root">
+    <!-- Top Minimal Bar: Spider icon + Simple Status -->
+    <header class="sidepanel-header">
+      <div class="header-left">
+        <svg class="header-spider" viewBox="0 0 128 128">
+          <circle cx="64" cy="64" r="50" fill="none" stroke="#10b981" stroke-width="2" stroke-opacity="0.3"/>
+          <path d="M 54 54 Q 30 26 18 36 M 52 62 Q 22 50 14 62 M 52 70 Q 24 82 16 94 M 56 78 Q 34 104 26 116" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 74 54 Q 98 26 110 36 M 76 62 Q 106 50 114 62 M 76 70 Q 104 82 112 94 M 72 78 Q 94 104 102 116" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <ellipse cx="64" cy="78" rx="14" ry="18" fill="#111827" stroke="#10b981" stroke-width="2"/>
+          <ellipse cx="64" cy="54" rx="11" ry="12" fill="#111827" stroke="#34d399" stroke-width="2"/>
+          <circle cx="60" cy="50" r="2" fill="#34d399"/>
+          <circle cx="68" cy="50" r="2" fill="#34d399"/>
+        </svg>
+        <div class="status-wrap">
+          <h1 class="header-title">Arachnos</h1>
+          <span id="connection-status" class="header-status">Watching & Learning</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="teach-modal-btn" class="teach-pill" title="Teach Arachnos a specific fact">+ Teach</button>
+        <button id="clear-chat-btn" class="header-icon-btn" title="Clear chat history">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Teach Modal (Inline minimal dropdown) -->
+    <div id="teach-drawer" class="teach-drawer hidden">
+      <div class="teach-inner">
+        <div class="teach-label">Teach Arachnos (Store Permanent Memory):</div>
+        <textarea id="teach-input" placeholder="e.g. My preferred coffee is cold brew with oat milk..."></textarea>
+        <div class="teach-buttons">
+          <button id="cancel-teach-btn" class="teach-cancel">Cancel</button>
+          <button id="submit-teach-btn" class="teach-submit">Remember</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversation Area with Generous Whitespace -->
+    <main id="chat-messages" class="messages-container">
+      <div class="welcome-card">
+        <p class="welcome-text">Arachnos remembers pages you browse locally. Ask anything or teach facts you want reinforced.</p>
+      </div>
+    </main>
+
+    <!-- Quick Suggestion Chips -->
+    <div class="quick-chips">
+      <button class="chip" data-q="What did you learn from the pages I visited?">What did you learn?</button>
+      <button class="chip" data-q="Summarize the key facts you grabbed">Summarize facts</button>
+      <button class="chip" data-q="What numbers or metrics did the spiders find?">Metrics</button>
+    </div>
+
+    <!-- Clean Bottom Input -->
+    <footer class="sidepanel-footer">
+      <form id="chat-form" class="chat-form">
+        <input
+          id="chat-input"
+          type="text"
+          placeholder="Ask anything you've browsed..."
+          autocomplete="off"
+        />
+        <button type="submit" id="send-btn" class="send-button" title="Send query">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </form>
+    </footer>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
