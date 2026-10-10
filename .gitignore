@@ -30,3 +30,6 @@ Thumbs.db
 
 # Windows directory junction alias
 arachnos-extension
+
+# Temporary public folder
+server/public/
