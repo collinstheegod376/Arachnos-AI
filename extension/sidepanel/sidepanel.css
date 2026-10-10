@@ -427,3 +427,471 @@ body {
 .send-button:active {
   transform: scale(0.95);
 }
+
+/* ==========================================
+   SEGMENTED TABS (Chat vs X Actions)
+   ========================================== */
+.panel-tabs {
+  display: flex;
+  background: #080b10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0 16px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.panel-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.panel-tab:hover {
+  color: #94a3b8;
+}
+
+.panel-tab.active {
+  color: #10b981;
+  border-bottom-color: #10b981;
+}
+
+.tab-badge {
+  background: #10b981;
+  color: #03140d;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 10px;
+  min-width: 15px;
+  text-align: center;
+}
+
+.tab-badge.hidden {
+  display: none;
+}
+
+/* View panels */
+.view-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.view-panel.hidden {
+  display: none !important;
+}
+
+/* ==========================================
+   X ACTIONS VIEW
+   ========================================== */
+.x-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.x-safety-banner {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #a7f3d0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.x-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.x-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.x-counter {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.x-cards-list,
+.x-rules-list,
+.x-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.x-empty-state,
+.x-loading-state {
+  background: #0d121c;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px 12px;
+  font-size: 11.5px;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Suggestion Card */
+.x-card {
+  background: #0e141f;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+
+.x-card:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.x-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.x-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.x-badge.repost {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.x-badge.like {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.x-badge.comment {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.x-author {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.x-card-preview {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.x-card-condition {
+  font-size: 10.5px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.x-card-comment-text {
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 2px solid #3b82f6;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #93c5fd;
+  border-radius: 2px;
+}
+
+.x-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.x-btn-confirm {
+  flex: 1;
+  background: #10b981;
+  color: #03140d;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.x-btn-confirm:hover {
+  background: #34d399;
+}
+
+.x-btn-confirm:disabled {
+  background: #1e293b;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.x-btn-ignore {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.x-btn-ignore:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+
+.x-card-status {
+  font-size: 10.5px;
+  margin-top: 4px;
+}
+.x-card-status.error {
+  color: #f87171;
+}
+.x-card-status.success {
+  color: #34d399;
+}
+
+/* Teach Form */
+.x-teach-card {
+  background: #0e141f;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.x-teach-hint {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.x-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.x-input-row input {
+  flex: 1;
+  background: #080b10;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #f8fafc;
+  font-size: 11.5px;
+  outline: none;
+}
+
+.x-input-row input:focus {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.x-btn-primary {
+  background: #10b981;
+  color: #03140d;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.x-btn-primary:hover {
+  background: #34d399;
+}
+
+.x-btn-text {
+  background: transparent;
+  border: none;
+  color: #10b981;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.x-teach-feedback {
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+.x-teach-feedback.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+.x-teach-feedback.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
+/* Rule Row */
+.x-rule-row {
+  background: #0e141f;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.x-rule-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.x-rule-desc {
+  font-size: 11.5px;
+  color: #e2e8f0;
+  word-break: break-word;
+}
+
+.x-rule-meta {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.x-rule-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.x-rule-toggle {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.x-rule-toggle.active {
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.x-rule-del {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.x-rule-del:hover {
+  color: #f87171;
+}
+
+/* Activity Log */
+.x-log-row {
+  background: #0e141f;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.x-log-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.x-log-status {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.x-log-status.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+.x-log-status.confirmed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.x-log-status.ignored {
+  background: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+}
+.x-log-status.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.x-log-url {
+  color: #cbd5e1;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.x-log-url:hover {
+  text-decoration: underline;
+  color: #10b981;
+}
+
+.x-log-time {
+  color: #475569;
+  font-size: 10px;
+  white-space: nowrap;
+}

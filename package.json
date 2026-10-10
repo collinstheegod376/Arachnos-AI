@@ -8,6 +8,7 @@
     "test:brain": "npx tsx server/src/brain/test-brain.ts",
     "test:learning": "npx tsx server/src/brain/test-learning-loop.ts",
     "test:crawler": "npx tsx server/src/crawler/test-runner.ts",
+    "test:x": "npx tsx server/src/xInteraction/test-x.ts",
     "start": "npm --prefix server run start"
   },
   "keywords": [

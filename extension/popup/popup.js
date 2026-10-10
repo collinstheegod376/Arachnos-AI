@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const autonomousLabel = document.getElementById('autonomous-label');
   const openSidepanelBtn = document.getElementById('open-sidepanel');
   const openOptionsBtn = document.getElementById('open-options');
+  const visibilityBtn = document.getElementById('visibility-btn');
 
   let currentSettings = {
     isActive: true,
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     serverUrl: 'http://localhost:3001',
     connected: false,
     autonomousMode: false,
+    spidersVisible: true,
   };
 
   // 1. Fetch current settings from background
@@ -73,7 +75,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       autonomousBtn.classList.remove('active');
       autonomousLabel.textContent = 'Autonomous: OFF';
     }
+
+    // Spider Visibility
+    const visible = currentSettings.spidersVisible !== false;
+    visibilityBtn.classList.toggle('on', visible);
+    visibilityBtn.setAttribute('aria-checked', String(visible));
   }
+
+  // Handle Spider Visibility Toggle (independent of Active/Paused)
+  visibilityBtn.addEventListener('click', () => {
+    currentSettings.spidersVisible = currentSettings.spidersVisible === false;
+    updateUI();
+    chrome.runtime.sendMessage({
+      type: 'SET_SETTINGS',
+      payload: { spidersVisible: currentSettings.spidersVisible },
+    });
+  });
 
   // Handle Autonomous Toggle
   autonomousBtn.addEventListener('click', () => {

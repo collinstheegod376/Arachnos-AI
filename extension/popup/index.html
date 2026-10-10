@@ -42,6 +42,18 @@
       </div>
     </div>
 
+    <!-- Spider Visibility (independent of Active/Paused) -->
+    <div class="visibility-section">
+      <button id="visibility-btn" class="visibility-row on" role="switch" aria-checked="true" title="Show or hide the spider overlay (harvesting still follows Active/Paused)">
+        <svg class="eye-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span class="visibility-text">Show spiders</span>
+        <span class="switch"><span class="switch-knob"></span></span>
+      </button>
+    </div>
+
     <!-- Autonomous Mode Control -->
     <div class="autonomous-section">
       <button id="autonomous-btn" class="autonomous-toggle" title="Allow spiders to auto-scroll and explore links autonomously">

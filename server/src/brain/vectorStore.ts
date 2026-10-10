@@ -147,6 +147,14 @@ export class VectorIndex {
   }
 
   /**
+   * Updates an existing chunk by removing the old one first, recomputing, and re-adding
+   */
+  public updateChunk(chunkId: string, updatedChunk: ProcessedChunk): void {
+    this.removeChunk(chunkId);
+    this.addChunk(updatedChunk);
+  }
+
+  /**
    * Hybrid Semantic Search: Cosine Similarity + BM25 Scoring
    */
   public search(queryText: string, queryTokens: string[], topK = 10, minScore = 0.05): VectorSearchResult[] {

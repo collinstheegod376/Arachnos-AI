@@ -252,3 +252,46 @@ export type WebSocketServerMessage =
   | QueryResponse
   | CrawlStatusEvent
   | { type: 'error'; message: string };
+
+
+// ---------------------------------------------------------------------------
+// X (Twitter) Interaction Module
+// ---------------------------------------------------------------------------
+
+export type XAction = 'repost' | 'comment' | 'like';
+
+export interface XRule {
+  id: number;
+  platform: 'x';
+  action: XAction;
+  /** Keywords; "a or b", "a, b" = any-of */
+  condition: string;
+  comment_text: string | null;
+  enabled: boolean;
+  /** ISO timestamp */
+  created_at: string;
+}
+
+export interface XSuggestion {
+  rule_id: number;
+  action: XAction;
+  comment_text: string | null;
+  condition: string;
+  post_url: string;
+  author: string | null;
+  /** First ~200 chars of post */
+  text_preview: string;
+}
+
+export type XActionLogStatus = 'confirmed' | 'ignored' | 'success' | 'failed';
+
+export interface XActionLog {
+  id: number;
+  rule_id: number;
+  post_url: string;
+  action: XAction;
+  status: XActionLogStatus;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+}

@@ -11,6 +11,7 @@ import {
   samplePagesHandler
 } from './crawler/index.js';
 import { Brain } from './brain/index.js';
+import { createXRouter } from './xInteraction/index.js';
 import {
   WebSocketClientMessage,
   WebSocketServerMessage
@@ -56,6 +57,19 @@ app.get('/', (_req: Request, res: Response) => {
       feedback: 'POST /feedback',
       teach: 'POST /teach',
       memory: 'GET /memory',
+      x: {
+        teach: 'POST /x/teach',
+        teach_natural: 'POST /x/teach/natural',
+        rules: 'GET /x/rules',
+        suggest: 'POST /x/suggest',
+        confirm: 'POST /x/confirm',
+        ignore: 'POST /x/ignore',
+        report: 'POST /x/report',
+        disable: 'POST /x/disable/:id',
+        enable: 'POST /x/enable/:id',
+        delete_rule: 'DELETE /x/rules/:id',
+        log: 'GET /x/log'
+      },
       websocket: 'ws://localhost:3001'
     },
     extension: 'Load extension/ in chrome://extensions to use Arachnos Personal'
@@ -248,6 +262,9 @@ app.delete('/api/memory/:id', handleDeleteMemory);
 app.get('/api/proxy', proxyHandler);
 app.get('/api/proxy/samples', samplePagesHandler);
 app.get('/api/samples', samplePagesHandler);
+
+// 7. X (Twitter) interaction teaching module (rules, suggestions, action log)
+app.use(createXRouter());
 
 app.post('/api/crawl', async (req: Request, res: Response) => {
   const { url, focusMode } = req.body;

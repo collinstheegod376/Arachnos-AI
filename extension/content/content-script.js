@@ -74,6 +74,13 @@
   let animationFrameId = null;
   let lastTime = performance.now();
 
+  // Spider visibility (chrome.storage.local `spidersVisible`, default true).
+  // When false: overlay hidden, no rAF loop, no visual effects. Harvesting
+  // keeps running via a lightweight timer-driven simulation tick.
+  let spidersVisible = true;
+  let hiddenTickId = null;
+  let hiddenLastTick = performance.now();
+
   // Visual effects queues:
   // 1. Floating word particles physically lifted and grabbed by spiders
   const floatingWords = [];
@@ -83,6 +90,12 @@
   const absorptionRipples = [];
   // 4. Word highlight reticles on screen
   const activeTargetBoxes = [];
+  // 5. Binary/byte data sparks swirling into spider
+  const dataSparks = [];
+  // 6. Telemetry indicators (+FACT, +128B) floating off spider mouth on absorption
+  const telemetryFloatingTags = [];
+  // 7. Subtle footstep contact rings when legs step on page
+  const footstepRipples = [];
 
   // Spiders fleet configuration
   const SPIDER_PROFILES = [
@@ -91,8 +104,9 @@
       name: 'Emerald Harvester',
       glowColor: '#10b981',
       secondaryGlow: '#059669',
-      bodyColor: '#111827',
+      bodyColor: '#0b1319',
       accentColor: '#34d399',
+      coreColor: '#10b981',
       speed: 2.5,
     },
     {
@@ -100,8 +114,9 @@
       name: 'Cyan Synthesizer',
       glowColor: '#06b6d4',
       secondaryGlow: '#0891b2',
-      bodyColor: '#0f172a',
+      bodyColor: '#081422',
       accentColor: '#38bdf8',
+      coreColor: '#06b6d4',
       speed: 2.3,
     },
     {
@@ -109,8 +124,9 @@
       name: 'Lime Explorer',
       glowColor: '#84cc16',
       secondaryGlow: '#65a30d',
-      bodyColor: '#141e12',
+      bodyColor: '#0d180b',
       accentColor: '#a3e635',
+      coreColor: '#84cc16',
       speed: 2.7,
     },
     {
@@ -118,8 +134,9 @@
       name: 'Amber Weaver',
       glowColor: '#f59e0b',
       secondaryGlow: '#d97706',
-      bodyColor: '#1c1917',
+      bodyColor: '#1a140b',
       accentColor: '#fbbf24',
+      coreColor: '#f59e0b',
       speed: 2.2,
     },
   ];
@@ -145,6 +162,11 @@
       this.harvestTimer = 0;
       this.idleTimer = 15 + index * 10;
       this.eyeIntensity = 1.0;
+      this.energyPulse = 0; // Spikes to 1.0 when absorbing data, feeds into reactor glow
+      this.cheliceraeOpen = 0; // Fangs articulation (opens/twitches during harvest)
+      this.pedipalpTwitch = 0; // Sensory feelers twitch
+      this.breathCycle = (index * 1.5); // Respiration oscillation
+      this.bodyLean = 0; // Banking into turns
     }
 
     // Get current position relative to viewport
@@ -160,6 +182,11 @@
     update(dt) {
       if (!isActive) return;
 
+      this.breathCycle += 0.04 * dt;
+      if (this.energyPulse > 0) {
+        this.energyPulse = Math.max(0, this.energyPulse - 0.025 * dt);
+      }
+
       const vPos = this.getViewportPos();
 
       // If user scrolled far away and spider is deep offscreen, scurry back towards visible viewport
@@ -171,7 +198,9 @@
 
       if (this.status === 'harvesting') {
         this.harvestTimer -= dt;
-        this.eyeIntensity = 1.0 + Math.sin(Date.now() * 0.02) * 0.5;
+        this.eyeIntensity = 1.0 + Math.sin(Date.now() * 0.03) * 0.8;
+        this.cheliceraeOpen = 0.5 + Math.sin(Date.now() * 0.04) * 0.5;
+        this.pedipalpTwitch = Math.sin(Date.now() * 0.06);
 
         if (this.harvestTimer <= 0) {
           this.status = 'idle';
@@ -183,6 +212,9 @@
       }
 
       if (this.status === 'idle') {
+        this.cheliceraeOpen *= 0.85;
+        this.pedipalpTwitch = Math.sin(Date.now() * 0.015) * 0.25;
+        this.bodyLean *= 0.88;
         this.idleTimer -= dt;
         if (this.idleTimer <= 0) {
           this.acquireNextTarget();
@@ -213,6 +245,10 @@
           while (diff < -Math.PI) diff += Math.PI * 2;
           while (diff > Math.PI) diff -= Math.PI * 2;
           this.heading += diff * 0.12;
+          this.bodyLean = diff * 0.45; // Bank slightly into turns
+
+          this.cheliceraeOpen *= 0.9;
+          this.pedipalpTwitch = Math.sin(Date.now() * 0.02) * 0.3;
 
           // Advance in document space
           const moveSpeed = this.profile.speed;
@@ -303,47 +339,77 @@
 
         const vPos = this.getViewportPos();
 
-        // 1. Add glowing target box around the element words
-        activeTargetBoxes.push({
-          rect: {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height,
-          },
-          color: this.profile.glowColor,
-          life: 85,
-          maxLife: 85,
-        });
+        // 1. Add glowing target box with animated scanline around the element words
+        if (spidersVisible) {
+          activeTargetBoxes.push({
+            rect: {
+              left: rect.left,
+              top: rect.top,
+              width: rect.width,
+              height: rect.height,
+            },
+            color: this.profile.glowColor,
+            accentColor: this.profile.accentColor,
+            life: 90,
+            maxLife: 90,
+            scanProgress: 0,
+          });
+        }
 
         // 2. Extract prominent words from the element to grab
         const cleanWords = text
           .replace(/[^\w\s-]/g, ' ')
           .split(/\s+/)
-          .filter(w => w.length >= 3 && !/^(the|and|for|that|this|with|from)$/i.test(w))
+          .filter(w => w.length >= 3 && !/^(the|and|for|that|this|with|from|have|been|they)$/i.test(w))
           .slice(0, 5);
 
         const wordsToGrab = cleanWords.length > 0 ? cleanWords : text.split(/\s+/).slice(0, 3);
 
         // 3. Spawn floating word particles physically lifting off the screen!
-        wordsToGrab.forEach((word, idx) => {
-          const wordStartX = rect.left + (idx + 0.5) * (rect.width / Math.max(wordsToGrab.length, 1));
-          const wordStartY = rect.top + rect.height * 0.5 + (Math.random() - 0.5) * 8;
+        if (spidersVisible) {
+          wordsToGrab.forEach((word, idx) => {
+            const wordStartX = rect.left + (idx + 0.5) * (rect.width / Math.max(wordsToGrab.length, 1));
+            const wordStartY = rect.top + rect.height * 0.5 + (Math.random() - 0.5) * 8;
 
-          floatingWords.push({
-            text: word,
-            x: wordStartX,
-            y: wordStartY,
-            originX: wordStartX,
-            originY: wordStartY,
-            targetSpider: this,
-            progress: 0,
-            speed: 0.016 + idx * 0.003,
-            color: this.profile.accentColor,
-            glowColor: this.profile.glowColor,
-            delay: idx * 8, // staggered lift off
+            floatingWords.push({
+              text: word,
+              x: wordStartX,
+              y: wordStartY,
+              originX: wordStartX,
+              originY: wordStartY,
+              targetSpider: this,
+              progress: 0,
+              speed: 0.015 + idx * 0.003,
+              color: this.profile.accentColor,
+              glowColor: this.profile.glowColor,
+              delay: idx * 8, // staggered lift off
+              scale: 1,
+            });
           });
-        });
+
+          // 3b. Spawn cyber data sparks (binary, hex, code glyphs) streaming into spider
+          const glyphs = ['01', '10', '0x', '{}', '[]', '<>', '#', '§', '&&', '::', '=>'];
+          const sparkCount = 8;
+          for (let s = 0; s < sparkCount; s++) {
+            const sparkX = rect.left + Math.random() * rect.width;
+            const sparkY = rect.top + Math.random() * rect.height;
+            dataSparks.push({
+              glyph: glyphs[Math.floor(Math.random() * glyphs.length)],
+              x: sparkX,
+              y: sparkY,
+              originX: sparkX,
+              originY: sparkY,
+              targetSpider: this,
+              progress: 0,
+              speed: 0.018 + Math.random() * 0.014,
+              delay: s * 5,
+              color: Math.random() > 0.4 ? this.profile.accentColor : '#ffffff',
+              glowColor: this.profile.glowColor,
+              size: 8 + Math.random() * 3,
+              swirlOffset: (Math.random() - 0.5) * 35,
+            });
+          }
+        }
 
         // 4. Send harvest event to background worker / local Brain
         const selector = getUniqueSelector(element);
@@ -391,12 +457,12 @@
     }
   }
 
-  // Calculate 3-segment procedural spider leg
+  // Calculate 3-segment procedural spider leg with natural arachnid kinematics
   function calculateLeg(hipX, hipY, legIndex, side, walkPhase, isMoving, isHarvesting, baseLength) {
     const angleOffsets = [
       Math.PI * 0.22,
-      Math.PI * 0.45,
-      Math.PI * 0.65,
+      Math.PI * 0.44,
+      Math.PI * 0.66,
       Math.PI * 0.88,
     ];
 
@@ -412,34 +478,34 @@
     let tipLift = 0;
 
     if (isMoving) {
-      const stride = baseLength * 0.36;
+      const stride = baseLength * 0.38;
       const forwardOffset = Math.sin(currentPhase) * stride;
-      tipLift = Math.max(0, Math.cos(currentPhase)) * 6;
-      tipReachX = Math.sin(baseAngle) * (baseLength * 0.9) - side * 4;
-      tipReachY = Math.cos(baseAngle) * (baseLength * 0.9) + forwardOffset;
+      tipLift = Math.max(0, Math.cos(currentPhase)) * 7;
+      tipReachX = Math.sin(baseAngle) * (baseLength * 0.92) - side * 4;
+      tipReachY = Math.cos(baseAngle) * (baseLength * 0.92) + forwardOffset;
     } else if (isHarvesting && legIndex === 0) {
-      // Front pedipalps vibrating during word grab
-      const jitter = Math.sin(Date.now() * 0.04 + legIndex) * 3;
-      tipReachX = side * 13 + jitter;
-      tipReachY = 28 + Math.cos(Date.now() * 0.03) * 2;
-      tipLift = 4;
+      // Front legs palpate forward during word capture
+      const jitter = Math.sin(Date.now() * 0.045 + legIndex) * 3.5;
+      tipReachX = side * 14 + jitter;
+      tipReachY = 26 + Math.cos(Date.now() * 0.035) * 2;
+      tipLift = 3.5;
     } else {
-      // Idle breathing
-      const breathe = Math.sin(Date.now() * 0.003 + legIndex * 0.5) * 1.5;
-      tipReachX = Math.sin(baseAngle) * (baseLength * 0.85 + breathe);
-      tipReachY = Math.cos(baseAngle) * (baseLength * 0.85);
+      // Idle respiration and subtle stance shifts
+      const breathe = Math.sin(Date.now() * 0.0028 + legIndex * 0.6) * 1.6;
+      tipReachX = Math.sin(baseAngle) * (baseLength * 0.86 + breathe);
+      tipReachY = Math.cos(baseAngle) * (baseLength * 0.86);
     }
 
     const tipX = hipX + tipReachX;
     const tipY = hipY + tipReachY;
 
-    const kneeDist = baseLength * 0.55;
-    const kneeAngle = baseAngle + side * 0.25;
+    const kneeDist = baseLength * 0.58;
+    const kneeAngle = baseAngle + side * 0.22;
     const kneeX = hipX + Math.sin(kneeAngle) * kneeDist;
-    const kneeY = hipY + Math.cos(kneeAngle) * kneeDist - tipLift * 0.7;
+    const kneeY = hipY + Math.cos(kneeAngle) * kneeDist - tipLift * 0.75;
 
-    const ankleX = (kneeX + tipX) * 0.5 + side * 3;
-    const ankleY = (kneeY + tipY) * 0.5 - tipLift * 0.3;
+    const ankleX = (kneeX + tipX) * 0.5 + side * 3.5;
+    const ankleY = (kneeY + tipY) * 0.5 - tipLift * 0.35;
 
     return {
       knee: { x: kneeX, y: kneeY },
@@ -448,11 +514,15 @@
     };
   }
 
-  // Draw spider at screen coordinates
+  // Draw spider with 3D exoskeleton shading, bio-reactor core, articulated fangs, and 8 eyes
   function drawSpiderAt(ctx, spider, screenX, screenY) {
     ctx.save();
     ctx.translate(screenX, screenY);
     ctx.rotate(spider.heading);
+
+    if (spider.bodyLean) {
+      ctx.rotate(spider.bodyLean * 0.4);
+    }
 
     const isMoving = spider.status === 'moving';
     const isHarvesting = spider.status === 'harvesting';
@@ -461,9 +531,21 @@
 
     ctx.scale(scale, scale);
 
+    // 1. Soft Dynamic Ground Shadow underneath the spider
+    ctx.save();
+    const shadowGrad = ctx.createRadialGradient(0, 4, 3, 0, 4, 26);
+    shadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.42)');
+    shadowGrad.addColorStop(0.6, 'rgba(0, 0, 0, 0.18)');
+    shadowGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = shadowGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 20, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
     const legLength = 34;
 
-    // 1. Draw 8 Procedural Legs
+    // 2. Draw 8 Procedural Articulated Legs (tapered lines + glowing servo joints)
     for (let side of [-1, 1]) {
       for (let legIdx = 0; legIdx < 4; legIdx++) {
         const hipX = side * (5 + legIdx * 1.5);
@@ -480,95 +562,242 @@
           legLength
         );
 
-        // Leg Shadow
+        // Ground contact shadow for each leg
         ctx.beginPath();
-        ctx.moveTo(hipX + 2, hipY + 3);
-        ctx.lineTo(joints.knee.x + 2, joints.knee.y + 3);
-        ctx.lineTo(joints.ankle.x + 2, joints.ankle.y + 3);
-        ctx.lineTo(joints.tip.x + 2, joints.tip.y + 3);
-        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-        ctx.lineWidth = 2.5;
+        ctx.moveTo(hipX + 2, hipY + 3.5);
+        ctx.lineTo(joints.knee.x + 2, joints.knee.y + 3.5);
+        ctx.lineTo(joints.ankle.x + 2, joints.ankle.y + 3.5);
+        ctx.lineTo(joints.tip.x + 2, joints.tip.y + 3.5);
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2.4;
         ctx.stroke();
 
-        // Main Metallic Leg
+        // Femur (Hip -> Knee): heavy armored section
         ctx.beginPath();
         ctx.moveTo(hipX, hipY);
         ctx.lineTo(joints.knee.x, joints.knee.y);
-        ctx.lineTo(joints.ankle.x, joints.ankle.y);
-        ctx.lineTo(joints.tip.x, joints.tip.y);
         ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = 2.8;
+        ctx.lineCap = 'round';
         ctx.stroke();
 
-        // Emissive Joint Accents
+        // Tibia (Knee -> Ankle): intermediate section
+        ctx.beginPath();
+        ctx.moveTo(joints.knee.x, joints.knee.y);
+        ctx.lineTo(joints.ankle.x, joints.ankle.y);
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2.0;
+        ctx.stroke();
+
+        // Tarsus (Ankle -> Tip): fine claw section
+        ctx.beginPath();
+        ctx.moveTo(joints.ankle.x, joints.ankle.y);
+        ctx.lineTo(joints.tip.x, joints.tip.y);
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+
+        // Glowing Knee Servo Joint
         ctx.fillStyle = spider.profile.glowColor;
         ctx.beginPath();
-        ctx.arc(joints.knee.x, joints.knee.y, 1.4, 0, Math.PI * 2);
+        ctx.arc(joints.knee.x, joints.knee.y, 1.5, 0, Math.PI * 2);
         ctx.fill();
 
+        // Ankle Accent
+        ctx.fillStyle = spider.profile.accentColor;
         ctx.beginPath();
-        ctx.arc(joints.tip.x, joints.tip.y, 1.2, 0, Math.PI * 2);
+        ctx.arc(joints.ankle.x, joints.ankle.y, 1.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tip Claw contact barb
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.arc(joints.tip.x, joints.tip.y, 0.9, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // 2. Pedipalps (Front feelers)
+    // 3. Articulated Chelicerae & Fangs (Front mouthparts that spread during data grabbing)
+    const fangSpread = (spider.cheliceraeOpen || 0) * 3.5;
     for (let side of [-1, 1]) {
+      // Chelicera base
       ctx.beginPath();
-      ctx.moveTo(side * 4, -12);
-      ctx.quadraticCurveTo(side * 8, -20, side * 5, -24);
-      ctx.strokeStyle = spider.profile.accentColor;
+      ctx.ellipse(side * 2.8, -12, 2.2, 3.2, side * 0.15, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.strokeStyle = spider.profile.secondaryGlow;
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      // Curved cyber fang
+      ctx.beginPath();
+      const fangBaseX = side * 3.2;
+      const fangBaseY = -13.5;
+      const fangTipX = side * (1.8 + fangSpread);
+      const fangTipY = -18 - (isHarvesting ? 1.5 : 0);
+      ctx.moveTo(fangBaseX, fangBaseY);
+      ctx.quadraticCurveTo(side * (4.5 + fangSpread), -16, fangTipX, fangTipY);
+      ctx.strokeStyle = isHarvesting ? spider.profile.accentColor : '#64748b';
       ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      // Glowing fang tip when harvesting
+      if (isHarvesting) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(fangTipX, fangTipY, 1.0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 4. Pedipalps (Front tactile sensory feelers with live twitch kinematics)
+    const twitch = spider.pedipalpTwitch || 0;
+    for (let side of [-1, 1]) {
+      const pJointX = side * (6.5 + twitch * side);
+      const pJointY = -17 + (isHarvesting ? Math.sin(Date.now() * 0.05) * 2 : 0);
+      const pTipX = side * (4.5 + twitch * side * 1.5);
+      const pTipY = -23 + (isHarvesting ? Math.cos(Date.now() * 0.05) * 2.5 : 0);
+
+      ctx.beginPath();
+      ctx.moveTo(side * 4, -10);
+      ctx.lineTo(pJointX, pJointY);
+      ctx.lineTo(pTipX, pTipY);
+      ctx.strokeStyle = spider.profile.accentColor;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Pedipalp sensory tip
+      ctx.fillStyle = spider.profile.glowColor;
+      ctx.beginPath();
+      ctx.arc(pTipX, pTipY, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 5. Abdomen (Opisthosoma) with metallic 3D gradient & Bio-Reactor Core
+    const breath = Math.sin(spider.breathCycle || 0) * 0.45;
+    const pulse = spider.energyPulse || 0;
+
+    ctx.save();
+    // 3D Carapace Radial Shading for Abdomen
+    const abGrad = ctx.createRadialGradient(-2, 10, 2, 0, 14, 15);
+    abGrad.addColorStop(0, '#1e293b');
+    abGrad.addColorStop(0.4, spider.profile.bodyColor);
+    abGrad.addColorStop(1, '#020617');
+
+    ctx.beginPath();
+    ctx.ellipse(0, 14, 10.5 + breath, 14.5 + breath, 0, 0, Math.PI * 2);
+    ctx.fillStyle = abGrad;
+    ctx.fill();
+    ctx.strokeStyle = spider.profile.secondaryGlow;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Segmented Tergite Armor Lines
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+    ctx.lineWidth = 1.0;
+    for (let seg = 0; seg < 3; seg++) {
+      const segY = 8 + seg * 5.5;
+      const segW = 8 - seg * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-segW, segY);
+      ctx.quadraticCurveTo(0, segY + 2.5, segW, segY);
       ctx.stroke();
     }
 
-    // 3. Abdomen (Rear)
-    ctx.save();
+    // Abdomen Bio-Reactor Core (Flashes on data absorption!)
+    const reactorY = 16;
+    const reactorRadius = 3.2 + pulse * 4.5 + breath * 0.5;
+
+    // Outer reactor halo
+    const coreGlow = ctx.createRadialGradient(0, reactorY, 1, 0, reactorY, reactorRadius * 2.2);
+    coreGlow.addColorStop(0, spider.profile.coreColor || spider.profile.glowColor);
+    coreGlow.addColorStop(0.5, (spider.profile.coreColor || spider.profile.glowColor) + '55');
+    coreGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = coreGlow;
     ctx.beginPath();
-    ctx.ellipse(0, 14, 10, 14, 0, 0, Math.PI * 2);
-    ctx.fillStyle = spider.profile.bodyColor;
+    ctx.arc(0, reactorY, reactorRadius * 2.2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = spider.profile.secondaryGlow;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
 
-    // Luminescent lines on abdomen
+    // Inner crucible diamond
+    ctx.save();
+    ctx.translate(0, reactorY);
+    ctx.rotate((Date.now() * 0.002) % (Math.PI * 2));
+    ctx.fillStyle = pulse > 0.4 ? '#ffffff' : spider.profile.accentColor;
     ctx.beginPath();
-    ctx.moveTo(0, 4);
-    ctx.lineTo(0, 24);
-    ctx.strokeStyle = spider.profile.glowColor;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(0, 18, 2, 0, Math.PI * 2);
-    ctx.fillStyle = spider.profile.accentColor;
+    ctx.moveTo(0, -reactorRadius);
+    ctx.lineTo(reactorRadius, 0);
+    ctx.lineTo(0, reactorRadius);
+    ctx.lineTo(-reactorRadius, 0);
+    ctx.closePath();
     ctx.fill();
     ctx.restore();
 
-    // 4. Cephalothorax (Front carapace)
+    ctx.restore();
+
+    // 6. Cephalothorax (Prosoma) with metallic specular highlight
+    ctx.save();
+    const cepGrad = ctx.createRadialGradient(-1, -6, 1, 0, -4, 10);
+    cepGrad.addColorStop(0, '#334155');
+    cepGrad.addColorStop(0.5, spider.profile.bodyColor);
+    cepGrad.addColorStop(1, '#020617');
+
     ctx.beginPath();
-    ctx.ellipse(0, -4, 8, 9, 0, 0, Math.PI * 2);
-    ctx.fillStyle = spider.profile.bodyColor;
+    ctx.ellipse(0, -4, 8.5, 9.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = cepGrad;
     ctx.fill();
     ctx.strokeStyle = spider.profile.glowColor;
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // 5. Glowing Quad Eyes
-    ctx.fillStyle = spider.profile.accentColor;
-    ctx.shadowColor = spider.profile.glowColor;
-    ctx.shadowBlur = 8 * spider.eyeIntensity;
+    // Dorsal Carina Centerline
     ctx.beginPath();
-    ctx.arc(-3, -9, 1.8, 0, Math.PI * 2);
-    ctx.arc(3, -9, 1.8, 0, Math.PI * 2);
+    ctx.moveTo(0, -10);
+    ctx.lineTo(0, 2);
+    ctx.strokeStyle = spider.profile.glowColor + '66';
+    ctx.lineWidth = 1.0;
+    ctx.stroke();
+    ctx.restore();
+
+    // 7. Eight Arachnid Cyber-Eyes (2 prominent AME + 6 secondary eyes with specular glints)
+    const eyeInt = spider.eyeIntensity || 1.0;
+    ctx.save();
+    ctx.shadowColor = spider.profile.glowColor;
+    ctx.shadowBlur = 9 * eyeInt;
+
+    // Anterior Median Eyes (AME) - Central large primary oculars
+    ctx.fillStyle = spider.profile.accentColor;
+    ctx.beginPath();
+    ctx.arc(-2.6, -9.8, 1.9, 0, Math.PI * 2);
+    ctx.arc(2.6, -9.8, 1.9, 0, Math.PI * 2);
     ctx.fill();
 
+    // Anterior Lateral Eyes (ALE) - Outer front
     ctx.beginPath();
-    ctx.arc(-5.5, -6.5, 1.2, 0, Math.PI * 2);
-    ctx.arc(5.5, -6.5, 1.2, 0, Math.PI * 2);
+    ctx.arc(-5.4, -8.2, 1.3, 0, Math.PI * 2);
+    ctx.arc(5.4, -8.2, 1.3, 0, Math.PI * 2);
     ctx.fill();
+
+    // Posterior Median Eyes (PME) - Behind center
+    ctx.beginPath();
+    ctx.arc(-2.2, -6.6, 1.1, 0, Math.PI * 2);
+    ctx.arc(2.2, -6.6, 1.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Posterior Lateral Eyes (PLE) - Outer flank
+    ctx.beginPath();
+    ctx.arc(-5.0, -5.2, 1.0, 0, Math.PI * 2);
+    ctx.arc(5.0, -5.2, 1.0, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.shadowBlur = 0;
+
+    // Specular Glint (white glint reflection on primary eyes)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-2.0, -10.3, 0.65, 0, Math.PI * 2);
+    ctx.arc(3.2, -10.3, 0.65, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     ctx.restore();
   }
@@ -631,6 +860,11 @@
 
   // Animation Loop (NEVER stops or disappears on scroll)
   function render(time) {
+    if (!spidersVisible) {
+      // Hidden: do not keep burning rAF; the hidden simulation tick takes over.
+      animationFrameId = null;
+      return;
+    }
     animationFrameId = requestAnimationFrame(render);
 
     const dt = Math.min((time - lastTime) / 16.66, 3);
@@ -652,16 +886,34 @@
             continue;
           }
 
-          const alpha = (tb.life / tb.maxLife) * 0.7;
+          const alpha = (tb.life / tb.maxLife) * 0.75;
           const r = tb.rect;
-          const corner = 6;
+          const corner = 7;
 
           ctx.save();
+
+          // Translucent cyber highlight fill over the grabbed text block
+          ctx.fillStyle = tb.color;
+          ctx.globalAlpha = alpha * 0.08;
+          ctx.fillRect(r.left, r.top, r.width, r.height);
+
+          // Animated laser scanline sweeping vertically across the element
+          tb.scanProgress = ((tb.scanProgress || 0) + 0.02 * dt) % 1.0;
+          const scanY = r.top + r.height * tb.scanProgress;
+          ctx.beginPath();
+          ctx.moveTo(r.left, scanY);
+          ctx.lineTo(r.left + r.width, scanY);
+          ctx.strokeStyle = tb.accentColor || tb.color;
+          ctx.globalAlpha = alpha * 0.6;
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+
+          // High-tech corner brackets around the grabbed words: [  ]
           ctx.strokeStyle = tb.color;
           ctx.globalAlpha = alpha;
-          ctx.lineWidth = 1.4;
-
-          // Corner brackets around the grabbed words: [  ]
+          ctx.lineWidth = 1.6;
+          ctx.shadowColor = tb.color;
+          ctx.shadowBlur = 6;
           ctx.beginPath();
           ctx.moveTo(r.left, r.top + corner);
           ctx.lineTo(r.left, r.top);
@@ -679,7 +931,42 @@
           ctx.restore();
         }
 
-        // 2. Draw & update Floating Words physically lifted off the page towards spiders!
+        // 2. Draw & update Cyber Data Sparks (binary, hex, code glyphs) streaming into spider
+        for (let i = dataSparks.length - 1; i >= 0; i--) {
+          const spark = dataSparks[i];
+          if (spark.delay > 0) {
+            spark.delay -= dt;
+            continue;
+          }
+
+          spark.progress += spark.speed * dt;
+          const spiderPos = spark.targetSpider.getViewportPos();
+          const t = Math.min(spark.progress, 1.0);
+          const oneMinusT = 1 - t;
+          const controlY = Math.min(spark.originY, spiderPos.y) - 30;
+
+          // Spiral swirling trajectory
+          const swirl = Math.sin(t * Math.PI * 3.5) * (spark.swirlOffset || 25) * (1 - t);
+          spark.x = (oneMinusT * oneMinusT * spark.originX + 2 * oneMinusT * t * ((spark.originX + spiderPos.x) / 2) + t * t * spiderPos.x) + swirl;
+          spark.y = oneMinusT * oneMinusT * spark.originY + 2 * oneMinusT * t * controlY + t * t * (spiderPos.y - 8);
+
+          const alpha = t < 0.85 ? 0.95 : Math.max(0, (1.0 - t) * 6.5);
+          ctx.save();
+          ctx.font = `bold ${Math.round(spark.size || 9)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+          ctx.fillStyle = spark.color;
+          ctx.shadowColor = spark.glowColor;
+          ctx.shadowBlur = 6;
+          ctx.globalAlpha = alpha;
+          ctx.fillText(spark.glyph, spark.x - 4, spark.y);
+          ctx.restore();
+
+          if (spark.progress >= 1.0) {
+            spark.targetSpider.energyPulse = Math.max(spark.targetSpider.energyPulse, 0.7);
+            dataSparks.splice(i, 1);
+          }
+        }
+
+        // 3. Draw & update Floating Words physically lifted off the page towards spiders!
         for (let i = floatingWords.length - 1; i >= 0; i--) {
           const fw = floatingWords[i];
           if (fw.delay > 0) {
@@ -692,55 +979,136 @@
 
           // Bezier curve pulling word from DOM to spider mouth
           const t = Math.min(fw.progress, 1.0);
-          const controlY = Math.min(fw.originY, spiderPos.y) - 25;
+          const controlY = Math.min(fw.originY, spiderPos.y) - 28;
           const oneMinusT = 1 - t;
 
           fw.x = oneMinusT * oneMinusT * fw.originX + 2 * oneMinusT * t * ((fw.originX + spiderPos.x) / 2) + t * t * spiderPos.x;
-          fw.y = oneMinusT * oneMinusT * fw.originY + 2 * oneMinusT * t * controlY + t * t * spiderPos.y;
+          fw.y = oneMinusT * oneMinusT * fw.originY + 2 * oneMinusT * t * controlY + t * t * (spiderPos.y - 8);
 
-          // Silk tractor beam filament connecting spider to the floating word
+          // Glowing Cyber-Silk Tractor Tether with animated pulse
           ctx.save();
           ctx.beginPath();
-          ctx.moveTo(spiderPos.x, spiderPos.y);
+          ctx.moveTo(spiderPos.x, spiderPos.y - 8);
           ctx.quadraticCurveTo((fw.x + spiderPos.x) / 2, controlY, fw.x, fw.y);
           ctx.strokeStyle = fw.glowColor;
-          ctx.globalAlpha = Math.max(0, 0.6 * (1 - t * 0.8));
-          ctx.lineWidth = 1;
-          ctx.setLineDash([2, 3]);
+          ctx.globalAlpha = Math.max(0, 0.7 * (1 - t * 0.75));
+          ctx.lineWidth = 1.3;
+          ctx.setLineDash([3, 3]);
+          ctx.lineDashOffset = -(Date.now() * 0.025) % 6;
           ctx.stroke();
+
+          // Travelling energy pulse sliding along the tractor silk
+          const pulseT = ((Date.now() * 0.0035 + i * 0.25) % 1.0);
+          const pOne = 1 - pulseT;
+          const px = pOne * pOne * fw.originX + 2 * pOne * pulseT * ((fw.originX + spiderPos.x) / 2) + pulseT * pulseT * spiderPos.x;
+          const py = pOne * pOne * fw.originY + 2 * pOne * pulseT * controlY + pulseT * pulseT * (spiderPos.y - 8);
+          ctx.beginPath();
+          ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = fw.glowColor;
+          ctx.shadowBlur = 6;
+          ctx.fill();
           ctx.restore();
 
-          // Draw Glowing Floating Word
-          const alpha = t < 0.8 ? 1.0 : Math.max(0, (1.0 - t) * 5);
+          // Draw Floating Word in a glowing translucent pill capsule
+          const alpha = t < 0.82 ? 1.0 : Math.max(0, (1.0 - t) * 5.5);
           ctx.save();
-          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", monospace';
+          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+          const textMetrics = ctx.measureText(fw.text);
+          const textW = textMetrics.width;
+          const pillW = textW + 12;
+          const pillH = 18;
+          const pillX = fw.x - pillW / 2;
+          const pillY = fw.y - pillH / 2;
+
+          // Translucent dark cyber-badge background
+          ctx.globalAlpha = alpha * 0.88;
+          ctx.fillStyle = 'rgba(8, 14, 24, 0.85)';
+          ctx.strokeStyle = fw.glowColor + 'bb';
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+          } else {
+            ctx.rect(pillX, pillY, pillW, pillH);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          // Neon glowing text inside capsule
+          ctx.globalAlpha = alpha;
           ctx.fillStyle = fw.color;
           ctx.shadowColor = fw.glowColor;
-          ctx.shadowBlur = 10;
-          ctx.globalAlpha = alpha;
-          ctx.fillText(fw.text, fw.x - 8, fw.y);
+          ctx.shadowBlur = 8;
+          ctx.fillText(fw.text, fw.x - textW / 2, fw.y + 3.5);
           ctx.restore();
 
           if (fw.progress >= 1.0) {
-            // Reached spider mouth -> create absorption ripple!
+            // Reached spider mouth -> flash spider reactor core and trigger absorption ripples!
+            fw.targetSpider.energyPulse = 1.0;
+
+            // Dual shockwave ripple: inner bright flash + outer expanding pulse
             absorptionRipples.push({
               x: spiderPos.x,
-              y: spiderPos.y,
+              y: spiderPos.y - 8,
               radius: 2,
-              maxRadius: 18,
+              maxRadius: 22,
               color: fw.color,
-              life: 20,
-              maxLife: 20,
+              life: 24,
+              maxLife: 24,
             });
+            absorptionRipples.push({
+              x: spiderPos.x,
+              y: spiderPos.y - 8,
+              radius: 1,
+              maxRadius: 11,
+              color: '#ffffff',
+              life: 14,
+              maxLife: 14,
+            });
+
+            // Rising Telemetry Tag (+FACT, +DATA, +64B)
+            const telemetryTags = ['+FACT', '+DATA', '+64B', '+BYTE'];
+            telemetryFloatingTags.push({
+              text: telemetryTags[Math.floor(Math.random() * telemetryTags.length)],
+              x: spiderPos.x + (Math.random() - 0.5) * 16,
+              y: spiderPos.y - 14,
+              color: fw.color,
+              glowColor: fw.glowColor,
+              life: 36,
+              maxLife: 36,
+            });
+
             floatingWords.splice(i, 1);
           }
         }
 
-        // 3. Draw absorption ripples
+        // 4. Draw Telemetry Floating Tags rising from spider mouth on absorption
+        for (let i = telemetryFloatingTags.length - 1; i >= 0; i--) {
+          const tag = telemetryFloatingTags[i];
+          tag.life -= dt;
+          tag.y -= 0.65 * dt;
+          if (tag.life <= 0) {
+            telemetryFloatingTags.splice(i, 1);
+            continue;
+          }
+
+          const alpha = (tag.life / tag.maxLife);
+          ctx.save();
+          ctx.font = 'bold 9px ui-monospace, SFMono-Regular, monospace';
+          ctx.fillStyle = tag.color;
+          ctx.shadowColor = tag.glowColor;
+          ctx.shadowBlur = 7;
+          ctx.globalAlpha = alpha;
+          ctx.fillText(tag.text, tag.x - 10, tag.y);
+          ctx.restore();
+        }
+
+        // 5. Draw absorption ripples (shockwaves expanding at spider mouth)
         for (let i = absorptionRipples.length - 1; i >= 0; i--) {
           const ar = absorptionRipples[i];
           ar.life -= dt;
-          ar.radius += 0.8 * dt;
+          ar.radius += 0.85 * dt;
           if (ar.life <= 0) {
             absorptionRipples.splice(i, 1);
             continue;
@@ -751,8 +1119,8 @@
           ctx.beginPath();
           ctx.arc(ar.x, ar.y, ar.radius, 0, Math.PI * 2);
           ctx.strokeStyle = ar.color;
-          ctx.globalAlpha = alpha * 0.8;
-          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = alpha * 0.85;
+          ctx.lineWidth = 1.6;
           ctx.stroke();
           ctx.restore();
         }
@@ -1019,8 +1387,100 @@
 
     scanDomForCandidates();
     initSpiders();
-    if (!animationFrameId) {
-      animationFrameId = requestAnimationFrame(render);
+    if (spidersVisible) {
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(render);
+      }
+    } else {
+      canvas.style.display = 'none';
+      startHiddenTick();
+    }
+  }
+
+  // Timer-driven simulation used while spiders are hidden. Runs spider logic
+  // (target acquisition + harvesting) and autonomous exploration without any
+  // drawing, at ~10Hz with fixed sub-steps so pacing matches the visible loop.
+  function hiddenTick() {
+    const now = performance.now();
+    const elapsed = now - hiddenLastTick;
+    hiddenLastTick = now;
+    if (spidersVisible) return;
+    try {
+      if (isActive) {
+        const steps = Math.min(Math.max(Math.round(elapsed / 16.66), 1), 8);
+        for (let s = 0; s < steps; s++) {
+          for (const spider of spiders) spider.update(1);
+        }
+      }
+      tickAutonomousExploration(now);
+    } catch (err) {
+      console.warn('[Arachnos] Hidden tick error:', err);
+    }
+  }
+
+  function startHiddenTick() {
+    if (hiddenTickId) return;
+    hiddenLastTick = performance.now();
+    hiddenTickId = setInterval(hiddenTick, 100);
+  }
+
+  function stopHiddenTick() {
+    if (hiddenTickId) {
+      clearInterval(hiddenTickId);
+      hiddenTickId = null;
+    }
+  }
+
+  function clearVisualQueues() {
+    floatingWords.length = 0;
+    activeTethers.length = 0;
+    absorptionRipples.length = 0;
+    activeTargetBoxes.length = 0;
+    dataSparks.length = 0;
+    telemetryFloatingTags.length = 0;
+    footstepRipples.length = 0;
+  }
+
+  // Show/hide the spider overlay. Idempotent; never duplicates the canvas.
+  function applySpidersVisible(value) {
+    const next = value !== false;
+    if (next === spidersVisible) return;
+    spidersVisible = next;
+
+    // Overlay not injected yet — startArachnos/injectCanvasOverlay will honour the flag.
+    if (!canvas) return;
+
+    if (!spidersVisible) {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      clearVisualQueues();
+      if (ctx) {
+        try {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        } catch {
+          // ignore
+        }
+      }
+      canvas.style.display = 'none';
+      startHiddenTick();
+    } else {
+      stopHiddenTick();
+      clearVisualQueues();
+      // Re-attach if the page (SPA) removed our canvas; reuse the same element.
+      if (!canvas.isConnected) {
+        const existing = document.getElementById('arachnos-spider-canvas');
+        if (existing && existing !== canvas) existing.remove();
+        const host = document.body || document.documentElement;
+        if (host) host.appendChild(canvas);
+      }
+      canvas.style.display = '';
+      resizeCanvas();
+      lastTime = performance.now();
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(render);
+      }
     }
   }
 
@@ -1390,8 +1850,31 @@
       if (message.config.autoFollowLinks !== undefined) {
         autoFollowLinks = message.config.autoFollowLinks;
       }
+      if (message.config.spidersVisible !== undefined) {
+        applySpidersVisible(message.config.spidersVisible);
+      }
     }
   });
+
+  // Fallback: react directly to storage changes of spidersVisible
+  try {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local' || !changes.spidersVisible) return;
+      applySpidersVisible(changes.spidersVisible.newValue);
+    });
+  } catch {
+    // ignore (storage API unavailable)
+  }
+
+  // Read persisted visibility ASAP (before/alongside GET_SETTINGS)
+  try {
+    chrome.storage.local.get(['spidersVisible'], (res) => {
+      if (chrome.runtime.lastError || !res) return;
+      if (res.spidersVisible !== undefined) applySpidersVisible(res.spidersVisible);
+    });
+  } catch {
+    // ignore
+  }
 
   // Immediate startup: spiders and UI appear instantly on page load
   function startArachnos() {
@@ -1419,6 +1902,7 @@
         autonomousMode = res.autonomousMode !== undefined ? res.autonomousMode : false;
         autoScroll = res.autoScroll !== undefined ? res.autoScroll : true;
         autoFollowLinks = res.autoFollowLinks !== undefined ? res.autoFollowLinks : true;
+        if (res.spidersVisible !== undefined) applySpidersVisible(res.spidersVisible);
         updateAutonomousUI();
       }
     });

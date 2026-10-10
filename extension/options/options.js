@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const autonomousModeCheckbox = document.getElementById('autonomous-mode-checkbox');
   const autoScrollCheckbox = document.getElementById('auto-scroll-checkbox');
   const autoFollowLinksCheckbox = document.getElementById('auto-follow-links-checkbox');
+  const spidersVisibleCheckbox = document.getElementById('spiders-visible-checkbox');
+  const xSuggestionsCheckbox = document.getElementById('x-suggestions-checkbox');
   const saveBtn = document.getElementById('save-settings-btn');
   const saveFeedback = document.getElementById('save-feedback');
   const statusPill = document.getElementById('status-pill');
@@ -29,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.autonomousMode !== undefined) autonomousModeCheckbox.checked = res.autonomousMode;
       if (res.autoScroll !== undefined) autoScrollCheckbox.checked = res.autoScroll;
       if (res.autoFollowLinks !== undefined) autoFollowLinksCheckbox.checked = res.autoFollowLinks;
+      spidersVisibleCheckbox.checked = res.spidersVisible !== false;
+      xSuggestionsCheckbox.checked = res.xSuggestionsEnabled !== false;
     }
     checkStatus();
     loadMemories();
@@ -54,10 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const autonomousMode = autonomousModeCheckbox.checked;
     const autoScroll = autoScrollCheckbox.checked;
     const autoFollowLinks = autoFollowLinksCheckbox.checked;
+    const spidersVisible = spidersVisibleCheckbox.checked;
+    const xSuggestionsEnabled = xSuggestionsCheckbox.checked;
 
     chrome.runtime.sendMessage({
       type: 'SET_SETTINGS',
-      payload: { serverUrl, spiderCount, autonomousMode, autoScroll, autoFollowLinks },
+      payload: { serverUrl, spiderCount, autonomousMode, autoScroll, autoFollowLinks, spidersVisible, xSuggestionsEnabled },
     }, () => {
       saveFeedback.textContent = 'Settings saved!';
       setTimeout(() => { saveFeedback.textContent = ''; }, 2000);

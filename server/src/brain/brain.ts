@@ -73,6 +73,9 @@ export class Brain extends EventEmitter {
       this.memoryStore
     );
 
+    // Hydrate vector index and knowledge graph from persistent memory store
+    this.hydrateFromMemoryStore();
+
     // Forward telemetry events
     this.telemetry.on('brain_processed', (event: BrainProcessedEvent) => {
       this.emit('brain_processed', event);
@@ -81,6 +84,58 @@ export class Brain extends EventEmitter {
     this.telemetry.on('knowledge_ready', (event: KnowledgeReadyEvent) => {
       this.emit('knowledge_ready', event);
     });
+  }
+
+  /**
+   * Hydrates vectorIndex and knowledgeGraph from persisted memoryStore records
+   */
+  private hydrateFromMemoryStore(): void {
+    const records = this.memoryStore.getRecords();
+    for (const record of records) {
+      if ((record as any).superseded || record.user_feedback === 'corrected') continue;
+      const text = (record.corrected_text || record.content || '').trim();
+      if (!text) continue;
+
+      const normalizedText = this.nlp.normalizeText(text);
+      const { tokens, stemmed } = this.nlp.tokenize(normalizedText);
+      const entities = this.nlp.extractEntities(normalizedText, [text]);
+      const relations = this.nlp.extractRelations(normalizedText, entities);
+
+      const chunk: ProcessedChunk = {
+        id: record.id,
+        spider_id: record.tags?.includes('taught_by_user') ? 'user-teach' : 'memory-sync',
+        timestamp: record.last_accessed || record.created_at || new Date().toISOString(),
+        page_url: record.source_url || 'memory://saved',
+        element_selector: record.selector || 'body',
+        bounding_box: record.bounding_box || { x: 0, y: 0, w: 0, h: 0 },
+        content_type: 'paragraph',
+        raw_text: text,
+        normalized_text: normalizedText,
+        extracted_facts: [text],
+        confidence: record.confidence ?? 1.0,
+        tokens,
+        stemmedTokens: stemmed,
+        vector: this.vectorIndex.generateEmbedding(normalizedText, tokens),
+        entities,
+        relations,
+      };
+
+      this.vectorIndex.addChunk(chunk);
+
+      for (const ent of entities) {
+        this.knowledgeGraph.upsertEntity(ent.name, ent.type, chunk.id);
+      }
+
+      for (const rel of relations) {
+        this.knowledgeGraph.upsertRelation(
+          rel.source,
+          rel.target,
+          rel.relation,
+          rel.weight,
+          chunk.id
+        );
+      }
+    }
   }
 
   /**
@@ -136,38 +191,53 @@ export class Brain extends EventEmitter {
     const updated = this.memoryStore.applyFeedback(payload);
 
     if (payload.feedback === 'corrected' && payload.corrected_text && updated) {
-      // Re-index corrected text into vector store
-      const { tokens, stemmed } = this.nlp.tokenize(payload.corrected_text);
-      const existingChunk = this.vectorIndex.getChunk(updated.id);
-      if (existingChunk) {
-        existingChunk.raw_text = payload.corrected_text;
-        existingChunk.normalized_text = payload.corrected_text.toLowerCase();
-        existingChunk.extracted_facts = [payload.corrected_text];
-        existingChunk.tokens = tokens;
-        existingChunk.stemmedTokens = stemmed;
-        existingChunk.confidence = 1.0;
-        this.vectorIndex.addChunk(existingChunk);
-      } else {
-        // Add new high-priority chunk for the corrected memory
-        const newChunk: ProcessedChunk = {
-          id: `corrected_${updated.id}`,
-          spider_id: 'user-correction',
-          timestamp: new Date().toISOString(),
-          page_url: updated.source_url,
-          element_selector: updated.selector || 'user-feedback',
-          bounding_box: updated.bounding_box || { x: 0, y: 0, w: 0, h: 0 },
-          content_type: 'paragraph',
-          raw_text: payload.corrected_text,
-          normalized_text: payload.corrected_text.toLowerCase(),
-          extracted_facts: [payload.corrected_text],
-          confidence: 1.0,
-          tokens,
-          stemmedTokens: stemmed,
-          vector: this.vectorIndex.generateEmbedding(payload.corrected_text.toLowerCase(), tokens),
-          entities: this.nlp.extractEntities(payload.corrected_text),
-          relations: [],
-        };
-        this.vectorIndex.addChunk(newChunk);
+      // 1. Remove old chunk from vector index BEFORE any token/text modification
+      const oldChunkId = payload.memory_id;
+      this.vectorIndex.removeChunk(oldChunkId);
+      if (updated.id !== oldChunkId) {
+        this.vectorIndex.removeChunk(updated.id);
+      }
+
+      // 2. Recompute vector embedding & tokens for corrected text
+      const normalizedText = this.nlp.normalizeText(payload.corrected_text);
+      const { tokens, stemmed } = this.nlp.tokenize(normalizedText);
+      const newVector = this.vectorIndex.generateEmbedding(normalizedText, tokens);
+      const entities = this.nlp.extractEntities(normalizedText, [payload.corrected_text]);
+      const relations = this.nlp.extractRelations(normalizedText, entities);
+
+      // 3. Add new/updated chunk with newly computed embedding
+      const chunk: ProcessedChunk = {
+        id: updated.id,
+        spider_id: 'user-correction',
+        timestamp: new Date().toISOString(),
+        page_url: updated.source_url,
+        element_selector: updated.selector || 'user-feedback',
+        bounding_box: updated.bounding_box || { x: 0, y: 0, w: 0, h: 0 },
+        content_type: 'paragraph',
+        raw_text: payload.corrected_text,
+        normalized_text: normalizedText,
+        extracted_facts: [payload.corrected_text],
+        confidence: 1.0,
+        tokens,
+        stemmedTokens: stemmed,
+        vector: newVector,
+        entities,
+        relations,
+      };
+
+      this.vectorIndex.addChunk(chunk);
+
+      // 4. Update knowledge graph
+      for (const ent of entities) {
+        this.knowledgeGraph.upsertEntity(ent.name, ent.type, chunk.id);
+      }
+      for (const rel of relations) {
+        this.knowledgeGraph.upsertRelation(rel.source, rel.target, rel.relation, rel.weight, chunk.id);
+      }
+    } else if (payload.feedback === 'negative' && updated) {
+      const chunk = this.vectorIndex.getChunk(updated.id);
+      if (chunk) {
+        chunk.confidence = updated.confidence;
       }
     }
 

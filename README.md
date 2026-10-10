@@ -10,11 +10,11 @@ Arachnos Personal turns the visual multi-spider crawler into a **personal AI com
 
 ## 🌟 Key Features
 
-1. **High-Fidelity Animated Spiders (Sole Webpage Overlay)**
+1. **High-Fidelity Animated Spiders & Visibility Toggle**
    - When active, the **only** visual element on the page is the spiders — no HUDs, cards, live feeds, or overlays on the webpage itself.
    - 60 fps procedural leg kinematics with tripod gait, idle breathing stance, and pedipalp vibrations.
    - Subtle, temporary light tethers and fading particles appear only while a spider is actively harvesting an element, then vanish immediately.
-   - Page content remains fully readable and uncluttered at all times.
+   - **Show Spiders Toggle (👁️):** Want distraction-free browsing while still learning? Turn off the spider overlay in the popup or options page. The canvas, particles, and render loops are removed, while continuous learning and page harvesting run invisibly in the background.
 
 2. **Personal Continuous Learning & Memory Tiers**
    - **Tier 1 (Raw Harvests):** Real-time text and structured DOM observations from browsed pages.
@@ -22,22 +22,34 @@ Arachnos Personal turns the visual multi-spider crawler into a **personal AI com
    - **Tier 3 (User-Reinforced Knowledge):** Explicit user facts ("Teach Arachnos") and corrections with highest weight in retrieval.
    - **Disk Persistence:** Memory is saved locally in `data/arachnos_memory.json` across browser and server restarts.
 
-3. **User Feedback & Correction Loop**
+3. **Teaching Page Interaction for X (Twitter) with Human-in-the-Loop Safety**
+   - **Teach Mode:** Teach Arachnos interaction rules in plain English:
+     - *"Repost posts about local AI"*
+     - *"When someone mentions Arachnos, reply with: Thanks for checking it out"*
+     - *"Stop reposting crypto posts"*
+   - **Suggest Mode:** While browsing `x.com`, Arachnos notices matching posts and surfaces them in the Side Panel with post preview and matched criteria.
+   - **Safety First (Zero Background Action):** Every action requires explicit user **Confirm** in the side panel before anything is clicked or typed on the page.
+   - **Full Audit Trail:** All confirmed, ignored, or executed interactions are logged to `server/data/x_interaction.json`.
+
+4. **User Feedback & Correction Loop**
    - **Reinforce (👍):** Boosts memory confidence and retrieval score.
    - **Downweight (👎):** Suppresses inaccurate facts.
    - **Correction (✏️):** When you tell Arachnos *"No, the price is actually $199"*, the original fact is superseded and the corrected fact is elevated to high-priority Tier 3 memory.
    - **Teach Mode:** Highlight text anywhere and right-click **"🕷️ Teach Arachnos (Remember This)"** or use the Side Panel "+ Teach" button.
 
-4. **Simplified Minimal UI**
-   - **Popup:** Clean, compact control with a single Start / Stop toggle, spider count selector (1–4), and connection indicator.
-   - **Side Panel Chat:** Calm, generous whitespace, soft green accents, short readable answers, tiny source tags, and inline feedback/correction buttons.
-   - **Options Page:** Server URL configuration, Ollama LLM endpoint, and memory inspector by tier.
+5. **Simplified Minimal UI & X Actions Tab**
+   - **Popup:** Clean, compact control with Start / Stop toggle, Show Spiders toggle, spider count selector (1–4), and connection indicator.
+   - **Side Panel Hub:** Two clean tabs:
+     - **Chat:** Generous whitespace, short readable answers, source citations, inline feedback.
+     - **X Actions:** Live suggestion cards with Confirm / Ignore buttons, natural language teaching input, active rules manager, and activity logs.
+   - **Options Page:** Server URL configuration, Ollama LLM endpoint, spider visibility, X suggestions toggle, and memory inspector by tier.
 
-5. **Local Brain Server (FastAPI / Express + Node)**
+6. **Local Brain Server (FastAPI / Express + Node)**
    - Streaming ingestion endpoint (`POST /ingest`).
    - Grounded RAG query endpoint (`POST /query`).
    - User feedback endpoint (`POST /feedback`).
    - Explicit memory teaching endpoint (`POST /teach`).
+   - X interaction endpoints: `/x/teach`, `/x/teach/natural`, `/x/rules`, `/x/suggest`, `/x/confirm`, `/x/ignore`, `/x/report`, `/x/log`.
    - Multi-tier memory inspection and deletion (`GET /memory`, `DELETE /memory/:id`).
    - Local LLM support: seamlessly connects to local **Ollama** (`llama3.1`, `qwen2.5`, etc.) if running, with zero-dependency offline synthesis fallback.
 
@@ -132,6 +144,9 @@ npm run test:learning
 
 # Test Spider Fleet DOM extraction strategies
 npm run test:crawler
+
+# Test X (Twitter) Rule Matching, NLP Parser, and Persistence
+npm run test:x
 ```
 
 ---

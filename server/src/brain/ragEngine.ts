@@ -81,6 +81,8 @@ export class RagQueryEngine {
       if (this.memoryStore) {
         const memoryHits = this.memoryStore.search(queryTokens, 6);
         for (const hit of memoryHits) {
+          if ((hit.record as any).superseded || hit.record.user_feedback === 'corrected') continue;
+
           // Convert memory hit to pseudo-chunk
           const memChunk: ProcessedChunk = {
             id: hit.record.id,
@@ -119,6 +121,9 @@ export class RagQueryEngine {
             });
           }
         }
+
+        // Filter out any superseded chunks
+        searchResults = searchResults.filter(r => !(r.chunk as any).superseded);
 
         // Re-sort searchResults by score (user_reinforced memories have top weight)
         searchResults.sort((a, b) => {
@@ -264,9 +269,15 @@ export class RagQueryEngine {
 
     const citations: Citation[] = [];
     const seenChunkIds = new Set<string>();
+    const seenCitationTexts = new Set<string>();
 
     const addCitation = (chunk: ProcessedChunk, queryTokens: string[]) => {
+      if ((chunk as any).superseded) return;
       if (seenChunkIds.has(chunk.id)) return;
+
+      const normText = chunk.raw_text.trim().toLowerCase();
+      if (seenCitationTexts.has(normText)) return;
+      seenCitationTexts.add(normText);
       seenChunkIds.add(chunk.id);
 
       let snippet = chunk.raw_text;
@@ -309,10 +320,12 @@ export class RagQueryEngine {
       }
 
       const bulletPoints: string[] = [];
+      const seenBullets = new Set<string>();
       for (const res of topChunks) {
         if (res.chunk.raw_text.trim()) {
           const firstSentence = res.chunk.raw_text.split(/(?<=[.?!])\s+/)[0];
-          if (firstSentence && firstSentence.length > 15) {
+          if (firstSentence && firstSentence.length > 15 && !seenBullets.has(firstSentence.toLowerCase())) {
+            seenBullets.add(firstSentence.toLowerCase());
             bulletPoints.push(`- ${firstSentence.trim()}`);
           }
         }
@@ -359,10 +372,14 @@ export class RagQueryEngine {
       }
 
       const facts: string[] = [];
+      const seenFacts = new Set<string>();
       for (const res of topChunks) {
         for (const f of res.chunk.extracted_facts) {
-          if (/\d+/.test(f)) {
-            facts.push(`- ${f}`);
+          const trimmed = f.trim();
+          const lower = trimmed.toLowerCase();
+          if (/\d+/.test(trimmed) && !seenFacts.has(lower)) {
+            seenFacts.add(lower);
+            facts.push(`- ${trimmed}`);
           }
         }
       }
@@ -405,6 +422,7 @@ export class RagQueryEngine {
 
       const supplementaryFacts = primaryChunk.extracted_facts
         .filter((f) => f !== coreAnswer && f.length > 10)
+        .filter((f, idx, arr) => arr.indexOf(f) === idx)
         .slice(0, 3);
 
       const relatedRels = subgraph.relations

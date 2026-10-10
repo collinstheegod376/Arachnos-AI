@@ -35,49 +35,127 @@
       </div>
     </header>
 
-    <!-- Teach Modal (Inline minimal dropdown) -->
+    <!-- Segmented Navigation: Chat vs X Actions -->
+    <nav class="panel-tabs">
+      <button id="tab-chat" class="panel-tab active" type="button">Chat</button>
+      <button id="tab-x" class="panel-tab" type="button">
+        <span>X Actions</span>
+        <span id="x-tab-badge" class="tab-badge hidden">0</span>
+      </button>
+    </nav>
+
+    <!-- Teach Modal (Inline minimal dropdown for general memory) -->
     <div id="teach-drawer" class="teach-drawer hidden">
       <div class="teach-inner">
         <div class="teach-label">Teach Arachnos (Store Permanent Memory):</div>
         <textarea id="teach-input" placeholder="e.g. My preferred coffee is cold brew with oat milk..."></textarea>
         <div class="teach-buttons">
-          <button id="cancel-teach-btn" class="teach-cancel">Cancel</button>
-          <button id="submit-teach-btn" class="teach-submit">Remember</button>
+          <button id="cancel-teach-btn" class="teach-cancel" type="button">Cancel</button>
+          <button id="submit-teach-btn" class="teach-submit" type="button">Remember</button>
         </div>
       </div>
     </div>
 
-    <!-- Conversation Area with Generous Whitespace -->
-    <main id="chat-messages" class="messages-container">
-      <div class="welcome-card">
-        <p class="welcome-text">Arachnos remembers pages you browse locally. Ask anything or teach facts you want reinforced.</p>
-      </div>
-    </main>
+    <!-- VIEW 1: CHAT VIEW -->
+    <div id="chat-view" class="view-panel active">
+      <!-- Conversation Area with Generous Whitespace -->
+      <main id="chat-messages" class="messages-container">
+        <div class="welcome-card">
+          <p class="welcome-text">Arachnos remembers pages you browse locally. Ask anything or teach facts you want reinforced.</p>
+        </div>
+      </main>
 
-    <!-- Quick Suggestion Chips -->
-    <div class="quick-chips">
-      <button class="chip" data-q="What did you learn from the pages I visited?">What did you learn?</button>
-      <button class="chip" data-q="Summarize the key facts you grabbed">Summarize facts</button>
-      <button class="chip" data-q="What numbers or metrics did the spiders find?">Metrics</button>
+      <!-- Quick Suggestion Chips -->
+      <div class="quick-chips">
+        <button class="chip" data-q="What did you learn from the pages I visited?">What did you learn?</button>
+        <button class="chip" data-q="Summarize the key facts you grabbed">Summarize facts</button>
+        <button class="chip" data-q="What numbers or metrics did the spiders find?">Metrics</button>
+      </div>
+
+      <!-- Clean Bottom Input -->
+      <footer class="sidepanel-footer">
+        <form id="chat-form" class="chat-form">
+          <input
+            id="chat-input"
+            type="text"
+            placeholder="Ask anything you've browsed or 'repost posts about...'"
+            autocomplete="off"
+          />
+          <button type="submit" id="send-btn" class="send-button" title="Send query">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </form>
+      </footer>
     </div>
 
-    <!-- Clean Bottom Input -->
-    <footer class="sidepanel-footer">
-      <form id="chat-form" class="chat-form">
-        <input
-          id="chat-input"
-          type="text"
-          placeholder="Ask anything you've browsed..."
-          autocomplete="off"
-        />
-        <button type="submit" id="send-btn" class="send-button" title="Send query">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
-        </button>
-      </form>
-    </footer>
+    <!-- VIEW 2: X ACTIONS VIEW -->
+    <div id="x-view" class="view-panel hidden">
+      <div class="x-scroll-container">
+        <!-- Safety Banner -->
+        <div class="x-safety-banner">
+          <span class="x-lock-icon">🔒</span>
+          <span><strong>Human-in-the-Loop:</strong> Nothing is posted, liked or replied to without your explicit <em>Confirm</em>.</span>
+        </div>
+
+        <!-- Section 1: Pending Suggestions -->
+        <section class="x-section">
+          <div class="x-section-header">
+            <span class="x-section-title">Pending Suggestions</span>
+            <span id="x-pending-counter" class="x-counter">0</span>
+          </div>
+          <div id="x-suggestions-list" class="x-cards-list">
+            <div class="x-empty-state">
+              No pending suggestions. As you view posts on x.com matching your rules, suggestions will appear here.
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Teach for X -->
+        <section class="x-section">
+          <div class="x-section-header">
+            <span class="x-section-title">Teach X Rules</span>
+          </div>
+          <div class="x-teach-card">
+            <div class="x-teach-hint">Type a natural command or rule:</div>
+            <div class="x-input-row">
+              <input
+                id="x-teach-input"
+                type="text"
+                placeholder="e.g. Repost posts about local AI"
+                autocomplete="off"
+              />
+              <button id="x-teach-submit-btn" class="x-btn-primary" type="button">Teach</button>
+            </div>
+            <div id="x-teach-feedback" class="x-teach-feedback hidden"></div>
+          </div>
+        </section>
+
+        <!-- Section 3: Learned Rules -->
+        <section class="x-section">
+          <div class="x-section-header">
+            <span class="x-section-title">Active Rules</span>
+            <button id="x-refresh-rules-btn" class="x-btn-text" type="button" title="Refresh rules">↻ Refresh</button>
+          </div>
+          <div id="x-rules-list" class="x-rules-list">
+            <div class="x-loading-state">Loading rules...</div>
+          </div>
+        </section>
+
+        <!-- Section 4: Recent Activity Log -->
+        <section class="x-section">
+          <div class="x-section-header">
+            <span class="x-section-title">Activity Log</span>
+            <button id="x-refresh-log-btn" class="x-btn-text" type="button" title="Refresh log">↻</button>
+          </div>
+          <div id="x-activity-list" class="x-activity-list">
+            <div class="x-loading-state">Loading activity...</div>
+          </div>
+        </section>
+      </div>
+    </div>
   </div>
 
   <script src="sidepanel.js"></script>

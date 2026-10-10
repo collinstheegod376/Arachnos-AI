@@ -37,7 +37,7 @@ export class IngestionBus {
   public computeChunkId(event: HarvestEvent): { chunkId: string; contentHash: string } {
     const rawNormalized = (event.raw_text || '').trim();
     const factsStr = (event.extracted_facts || []).join('|');
-    const contentKey = `${rawNormalized}::${factsStr}::${event.content_type}::${event.element_selector}`;
+    const contentKey = `${event.page_url || ''}::${rawNormalized}::${factsStr}::${event.content_type}::${event.element_selector}`;
     const hash = createHash('sha256').update(contentKey).digest('hex').slice(0, 16);
     const chunkId = `chk_${event.spider_id || 'spider'}_${hash}`;
     return { chunkId, contentHash: hash };

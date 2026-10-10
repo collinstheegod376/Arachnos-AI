@@ -143,6 +143,75 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+/* Spider Visibility Switch */
+.visibility-section {
+  width: 100%;
+}
+
+.visibility-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.visibility-row:hover {
+  color: #94a3b8;
+}
+
+.visibility-row.on {
+  color: #94a3b8;
+}
+
+.visibility-row.on .eye-icon {
+  color: #10b981;
+}
+
+.visibility-text {
+  flex: 1;
+  text-align: left;
+}
+
+.switch {
+  position: relative;
+  width: 24px;
+  height: 13px;
+  border-radius: 7px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #64748b;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.visibility-row.on .switch {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.visibility-row.on .switch-knob {
+  left: 12px;
+  background: #10b981;
+  box-shadow: 0 0 4px #10b981;
+}
+
 /* Autonomous Mode Toggle */
 .autonomous-section {
   width: 100%;
