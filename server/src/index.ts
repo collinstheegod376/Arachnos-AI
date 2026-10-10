@@ -27,6 +27,18 @@ process.on('unhandledRejection', (reason: any) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Find static public / client directory
+const possibleStaticPaths = [
+  path.resolve(__dirname, '../public'),
+  path.resolve(__dirname, '../../public'),
+  path.resolve(process.cwd(), 'server/public'),
+  path.resolve(process.cwd(), 'public'),
+  path.resolve(__dirname, '../../client/dist'),
+  path.resolve(__dirname, '../client/dist'),
+  path.resolve(process.cwd(), 'client/dist'),
+];
+const staticPath = possibleStaticPaths.find(p => fs.existsSync(p)) || possibleStaticPaths[0];
+
 const PORT = process.env.PORT || 3001;
 const app = express();
 const server = http.createServer(app);
@@ -42,8 +54,16 @@ app.use(cors({
 app.options('*', cors());
 app.use(express.json());
 
-// Brain Server Overview Root Endpoint
-app.get('/', (_req: Request, res: Response) => {
+// Serve static frontend assets
+if (fs.existsSync(staticPath)) {
+  console.log(`[Static] Serving frontend static assets from: ${staticPath}`);
+  app.use(express.static(staticPath));
+} else {
+  console.warn(`[Static] Static directory not found at: ${staticPath}`);
+}
+
+// API Overview Endpoint
+app.get('/api/overview', (_req: Request, res: Response) => {
   res.json({
     system: 'Arachnos Personal — Local Brain Server',
     status: 'online',
@@ -315,6 +335,19 @@ const handleHealth = (_req: Request, res: Response) => {
 app.get('/status', handleHealth);
 app.get('/api/status', handleHealth);
 app.get('/api/health', handleHealth);
+
+// SPA Fallback: serve index.html for non-API client navigation
+app.get('*', (req: Request, res: Response, next) => {
+  if (req.path.startsWith('/api') || req.path === '/ingest' || req.path === '/query' || req.path === '/feedback' || req.path === '/teach' || req.path === '/memory' || req.path === '/status') {
+    return next();
+  }
+  const indexPath = path.join(staticPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Project Arachnos UI build not found.');
+  }
+});
 
 interface ExtWebSocket extends WebSocket {
   isAlive: boolean;
