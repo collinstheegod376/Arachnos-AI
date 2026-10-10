@@ -180,6 +180,13 @@
     }
 
     update(dt) {
+      if (!Number.isFinite(this.docX) || !Number.isFinite(this.docY)) {
+        this.docX = (window.scrollX || 0) + 120 + this.index * 120;
+        this.docY = (window.scrollY || 0) + 140 + this.index * 100;
+        this.targetDocX = this.docX;
+        this.targetDocY = this.docY;
+      }
+
       if (!isActive) return;
 
       this.breathCycle += 0.04 * dt;
@@ -191,8 +198,8 @@
 
       // If user scrolled far away and spider is deep offscreen, scurry back towards visible viewport
       if (vPos.y < -250 || vPos.y > window.innerHeight + 250 || vPos.x < -250 || vPos.x > window.innerWidth + 250) {
-        this.targetDocX = window.scrollX + 100 + Math.random() * (window.innerWidth - 200);
-        this.targetDocY = window.scrollY + 100 + Math.random() * (window.innerHeight - 200);
+        this.targetDocX = (window.scrollX || 0) + 100 + Math.random() * (Math.max(window.innerWidth - 200, 100));
+        this.targetDocY = (window.scrollY || 0) + 100 + Math.random() * (Math.max(window.innerHeight - 200, 100));
         this.status = 'moving';
       }
 
@@ -874,7 +881,10 @@
 
     try {
       const dpr = window.devicePixelRatio || 1;
-      ctx.clearRect(0, 0, (canvas.width / dpr) + 100, (canvas.height / dpr) + 100);
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(dpr, dpr);
 
       if (isActive) {
         // 1. Draw glowing targeting reticles around candidate words on screen
@@ -1147,9 +1157,12 @@
         drawSpiderAt(ctx, spider, sPos.x, sPos.y);
       }
 
+      ctx.restore();
+
       tickAutonomousExploration(time);
     } catch (err) {
       console.warn('[Arachnos] Render frame error:', err);
+      try { ctx.restore(); } catch {}
     }
   }
 
@@ -1365,15 +1378,20 @@
 
   // Inject overlay canvas into page
   function injectCanvasOverlay() {
-    if (document.getElementById('arachnos-spider-canvas')) return;
+    const existing = document.getElementById('arachnos-spider-canvas');
+    if (existing) {
+      existing.remove();
+    }
 
     canvas = document.createElement('canvas');
     canvas.id = 'arachnos-spider-canvas';
     canvas.style.position = 'fixed';
     canvas.style.top = '0px';
     canvas.style.left = '0px';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
     canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '2147483646';
+    canvas.style.zIndex = '2147483647';
     canvas.style.background = 'transparent';
 
     const host = document.body || document.documentElement;
@@ -1487,15 +1505,12 @@
   function resizeCanvas() {
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
-    const w = window.innerWidth || document.documentElement.clientWidth || 1200;
-    const h = window.innerHeight || document.documentElement.clientHeight || 800;
+    const w = Math.max(window.innerWidth || document.documentElement?.clientWidth || 1200, 300);
+    const h = Math.max(window.innerHeight || document.documentElement?.clientHeight || 800, 300);
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
-    if (ctx) {
-      ctx.scale(dpr, dpr);
-    }
   }
 
   // ==========================================

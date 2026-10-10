@@ -84,7 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Handle Spider Visibility Toggle (independent of Active/Paused)
   visibilityBtn.addEventListener('click', () => {
-    currentSettings.spidersVisible = currentSettings.spidersVisible === false;
+    const isCurrentlyVisible = currentSettings.spidersVisible !== false;
+    currentSettings.spidersVisible = !isCurrentlyVisible;
     updateUI();
     chrome.runtime.sendMessage({
       type: 'SET_SETTINGS',
